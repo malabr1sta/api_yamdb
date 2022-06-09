@@ -10,7 +10,6 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Title, User
-from rest_framework import permissions
 
 from .filter import TitleFilter
 from .permissions import Admin, IsAdminOrReadOnly

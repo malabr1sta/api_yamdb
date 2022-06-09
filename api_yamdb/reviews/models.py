@@ -16,10 +16,16 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ('id',)
+
 
 class Genre(models.Model):
     name = models.CharField(max_length=20)
     slug = models.SlugField(unique=True)
+
+    class Meta:
+        ordering = ('id',)
 
     def __str__(self):
         return self.name
@@ -41,6 +47,9 @@ class Title(models.Model):
     name = models.CharField(max_length=20)
     description = models.TextField(blank=True)
     year = models.IntegerField()
+
+    class Meta:
+        ordering = ('-year',)
 
     def __str__(self):
         return self.name
