@@ -1,8 +1,9 @@
+import datetime
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from reviews.models import User
+from reviews.models import Category, Genre, Title, User
 
 #UserModel = get_user_model()
 
@@ -114,3 +115,64 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'confirmation_code']
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    """Класс преобразует данные моддели Category."""
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug',)
+
+
+class GenreSerializer(serializers.ModelSerializer):
+    """Класс преобразует данные моддели Genre."""
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug',)
+
+
+class TitleGetSerializer(serializers.ModelSerializer):
+    """Класс преобразует данные моддели Title, при GET запросе."""
+
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Title
+        fields = '__all__'
+
+
+class TitlePostUpdateSerializer(serializers.ModelSerializer):
+    """Класс преобразует данные моддели Title,
+       при POST, PATCH, DELETE запросах."""
+
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all(),
+    )
+    genre = serializers.SlugRelatedField(
+        required=False,
+        many=True,
+        slug_field='slug',
+        queryset=Genre.objects.all(),
+    )
+
+    class Meta:
+        model = Title
+        fields = '__all__'
+
+    def validate_year(self, value):
+        if value > datetime.datetime.now().year:
+            raise serializers.ValidationError('Фильм еще не вышел.')
+        return value
+
+    def create(self, validated_data):
+        if 'genre' not in self.initial_data:
+            title = Title.objects.create(**validated_data)
+        genres = validated_data.pop('genre')
+        genres = tuple(genres)
+        title = Title.objects.create(**validated_data)
+        title.genre.add(*genres)
+        return title
