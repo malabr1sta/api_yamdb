@@ -1,14 +1,9 @@
 import datetime
-from attr import field
-from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
 from reviews.models import Category, Genre, Title, User, Review, Comment
 from django.db.models import Avg
 from rest_framework.validators import UniqueTogetherValidator
-
-#UserModel = get_user_model()
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -187,17 +182,25 @@ class TitlePostUpdateSerializer(serializers.ModelSerializer):
         return title
 
 
+class CurrentTitle_id:
+    """Клас для дэфолтного значения поля title в ReviewSerializer."""
+    requires_context = True
+
+    def __call__(self, serializer_field):
+        title_id = int(
+            serializer_field.context['request'].path.split('/')[-3]
+            #  '/api/v1/titles/{title_id}/reviews/'.split('/')[-3]
+        )
+        return get_object_or_404(Title, pk=title_id)
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
-    title = serializers.HiddenField(default=)
-
-    def perform_create(self, serializer):
-        title = Title.objects.get(pk=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+    title = serializers.HiddenField(default=CurrentTitle_id())
 
     class Meta:
         model = Review
