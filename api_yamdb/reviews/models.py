@@ -84,7 +84,7 @@ class Review(models.Model):
         ordering = ('-pub_date',)
 
     def __str__(self):
-        return f'{self.author} - {self.score}'
+        return f'{self.author} - {self.title} - {self.text[:50]+"..."}'
 
 
 class Comment(models.Model):
