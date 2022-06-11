@@ -44,7 +44,6 @@ INSTALLED_APPS = [
     'django_filters',
     'api',
     'reviews',
-    'csvimport.app.CSVImportConf'
 ]
 
 
