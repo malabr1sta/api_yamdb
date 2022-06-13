@@ -107,37 +107,6 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
-class UsersMeViewSet4(viewsets.ModelViewSet):
-    """Класс для обработки запросов с username = me."""
-
-    serializer_class = UserSerializer()
-    @action(methods=['get', 'put', 'patch'],detail=False, url_path='me')
-    def list(self, request):
-        queryset = User.objects.get(username=request.user)
-        serializer = UserMeSerializer(queryset)
-        return Response(serializer.data)
-
-    def put(self, request):
-        data = request.data
-        if ('role' in request.data):
-            data['role'] = request.user.role
-        serializer = UserMeSerializer(
-            request.user, data=request.data, partial=False)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    def patch(self, request):
-        data1 = request.data
-        if ('role' in data1):
-            data1._mutable = True
-            data1['role'] = request.user.role
-        serializer = UserMeSerializer(request.user, data=data1, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-
 class ListCreateDestroy(mixins.ListModelMixin, mixins.CreateModelMixin,
                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
 

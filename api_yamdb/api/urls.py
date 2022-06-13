@@ -7,7 +7,6 @@ from .views import (CategoryViewSet, CreateUserViewSet, GenreViewSet,
 
 router = DefaultRouter()
 router.register('auth/signup', CreateUserViewSet)
-#router.register('users/me', UsersMeViewSet, basename='usersme')
 router.register('users', UsersViewSet, basename='users')
 router.register("categories", CategoryViewSet)
 router.register("genres", GenreViewSet)
