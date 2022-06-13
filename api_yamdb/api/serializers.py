@@ -189,7 +189,6 @@ class CurrentTitle_id:
     def __call__(self, serializer_field):
         title_id = int(
             serializer_field.context['request'].path.split('/')[-3]
-            #  '/api/v1/titles/{title_id}/reviews/'.split('/')[-3]
         )
         return get_object_or_404(Title, pk=title_id)
 
