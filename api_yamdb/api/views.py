@@ -14,9 +14,10 @@ from rest_framework.decorators import action
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import AccessToken
 from reviews.models import Category, Genre, Title, User, Review
+from rest_framework import serializers
 
 from .filter import TitleFilter
-from .permissions import Admin, IsAdminOrReadOnly, ReviewCommentPermission
+from .permissions import Admin, IsAdminOrReadOnly, IsAdminModeratorOrReadOnly
 from .serializers import (CategorySerializer, CreateUserSerializer,
                           GenreSerializer, TitleGetSerializer,
                           TitlePostUpdateSerializer, TokenSerializer,
@@ -110,10 +111,7 @@ class UsersViewSet(viewsets.ModelViewSet):
 class ListCreateDestroy(mixins.ListModelMixin, mixins.CreateModelMixin,
                         mixins.DestroyModelMixin, viewsets.GenericViewSet):
 
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('=name',)
-    lookup_field = 'slug'
-    permission_classes = (IsAdminOrReadOnly,)
+    pass
 
 
 class CategoryViewSet(ListCreateDestroy):
@@ -121,6 +119,10 @@ class CategoryViewSet(ListCreateDestroy):
 
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('=name',)
+    lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class GenreViewSet(ListCreateDestroy):
@@ -128,6 +130,10 @@ class GenreViewSet(ListCreateDestroy):
 
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('=name',)
+    lookup_field = 'slug'
+    permission_classes = (IsAdminOrReadOnly,)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -144,41 +150,10 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleGetSerializer
         return TitlePostUpdateSerializer
 
-    def create(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        pk = serializer.data['id']
-        title = Title.objects.get(id=pk)
-        serializer = TitleGetSerializer(title)
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers
-        )
-
-    def update(self, request, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=partial
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        if getattr(instance, '_prefetched_objects_cache', None):
-            instance._prefetched_objects_cache = {}
-        pk = serializer.data['id']
-        title = Title.objects.get(id=pk)
-        serializer = TitleGetSerializer(title)
-        return Response(serializer.data)
-
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (ReviewCommentPermission,)
+    permission_classes = (IsAdminModeratorOrReadOnly,)
 
     def get_queryset(self):
         title = Title.objects.get(pk=self.kwargs.get('title_id'))
@@ -186,12 +161,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return new_queryset
 
     def perform_create(self, serializer):
-        title = Title.objects.get(pk=self.kwargs.get('title_id'))
-        serializer.save(author=self.request.user, title=title)
+        author = self.request.user
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        if Review.objects.filter(title=title, author=author).exists():
+            raise serializers.ValidationError(
+                'Вы  может оставить только один отзыв на произведение.'
+            )
+        serializer.save(author=author, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    permission_classes = (ReviewCommentPermission,)
+    permission_classes = (IsAdminModeratorOrReadOnly,)
     serializer_class = CommentSerializer
 
     def get_queryset(self):

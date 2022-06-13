@@ -1,9 +1,7 @@
 import datetime
-from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from reviews.models import Category, Genre, Title, User, Review, Comment
 from django.db.models import Avg
-from rest_framework.validators import UniqueTogetherValidator
 
 
 class CreateUserSerializer(serializers.ModelSerializer):
@@ -172,45 +170,20 @@ class TitlePostUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Фильм еще не вышел.')
         return value
 
-    def create(self, validated_data):
-        if 'genre' not in self.initial_data:
-            title = Title.objects.create(**validated_data)
-        genres = validated_data.pop('genre')
-        genres = tuple(genres)
-        title = Title.objects.create(**validated_data)
-        title.genre.add(*genres)
-        return title
-
-
-class CurrentTitle_id:
-    """Клас для дэфолтного значения поля title в ReviewSerializer."""
-    requires_context = True
-
-    def __call__(self, serializer_field):
-        title_id = int(
-            serializer_field.context['request'].path.split('/')[-3]
-        )
-        return get_object_or_404(Title, pk=title_id)
-
 
 class ReviewSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(
         slug_field='username',
-        read_only=True,
-        default=serializers.CurrentUserDefault()
+        read_only=True
     )
-    title = serializers.HiddenField(default=CurrentTitle_id())
+    title = serializers.SlugRelatedField(
+        slug_field='name',
+        read_only=True
+    )
 
     class Meta:
         model = Review
         fields = '__all__'
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Review.objects.all(),
-                fields=('title', 'author'),
-                message='Вы  может оставить только один отзыв на произведение.'
-            ),
-        ]
 
 
 class CommentSerializer(serializers.ModelSerializer):

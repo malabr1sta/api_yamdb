@@ -42,7 +42,7 @@ class Title(models.Model):
     )
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True)
-    year = models.IntegerField()
+    year = models.IntegerField(db_index=True)
 
     class Meta:
         ordering = ('-year',)
