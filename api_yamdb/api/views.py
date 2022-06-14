@@ -88,6 +88,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer = UserMeSerializer(queryset)
         return Response(serializer.data)
 
+    @action(detail=False, url_path='me', permission_classes=[IsAuthenticated])
     def put(self, request):
         data = request.data
         if ('role' in request.data):
@@ -98,6 +99,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer.save()
         return Response(serializer.data)
 
+    @action(detail=False, url_path='me', permission_classes=[IsAuthenticated])
     def patch(self, request):
         data1 = request.data
         if ('role' in data1):
