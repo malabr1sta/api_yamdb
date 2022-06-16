@@ -82,33 +82,26 @@ class UsersViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('username',)
 
-    @action(detail=False, url_path='me', permission_classes=[IsAuthenticated])
-    def get(self, request):
-        queryset = User.objects.get(username=request.user)
-        serializer = UserMeSerializer(queryset)
-        return Response(serializer.data)
-
-    @action(detail=False, url_path='me', permission_classes=[IsAuthenticated])
-    def put(self, request):
-        data = request.data
-        if ('role' in request.data):
-            data['role'] = request.user.role
-        serializer = UserMeSerializer(
-            request.user, data=request.data, partial=False)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
-    @action(detail=False, url_path='me', permission_classes=[IsAuthenticated])
-    def patch(self, request):
-        data1 = request.data
-        if ('role' in data1):
-            data1._mutable = True
-            data1['role'] = request.user.role
-        serializer = UserMeSerializer(request.user, data=data1, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
+    @action(
+        detail=False, url_path='me',
+        permission_classes=[IsAuthenticated], methods=["get", "patch"]
+    )
+    def me(self, request):
+        if request.method == 'GET':
+            queryset = User.objects.get(username=request.user)
+            serializer = UserMeSerializer(queryset)
+            return Response(serializer.data)
+        if request.method == 'PATCH':
+            data1 = request.data
+            if ('role' in data1):
+                data1._mutable = True
+                data1['role'] = request.user.role
+            serializer = UserMeSerializer(
+                request.user, data=data1, partial=True
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
 
 class ListCreateDestroy(mixins.ListModelMixin, mixins.CreateModelMixin,
