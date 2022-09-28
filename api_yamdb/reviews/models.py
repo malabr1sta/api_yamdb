@@ -1,4 +1,3 @@
-from tkinter import CASCADE
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -13,7 +12,7 @@ class Category(models.Model):
         return self.name
 
     class Meta:
-        ordering = ('id',)
+        ordering = ("id",)
 
 
 class Genre(models.Model):
@@ -21,7 +20,7 @@ class Genre(models.Model):
     slug = models.SlugField(unique=True)
 
     class Meta:
-        ordering = ('id',)
+        ordering = ("id",)
 
     def __str__(self):
         return self.name
@@ -29,40 +28,26 @@ class Genre(models.Model):
 
 class Title(models.Model):
     category = models.ForeignKey(
-        Category,
-        null=True,
-        on_delete=models.SET_NULL,
-        related_name='title'
+        Category, null=True, on_delete=models.SET_NULL, related_name="title"
     )
     genre = models.ManyToManyField(
-        Genre,
-        blank=True,
-        related_name='title',
-        through='TitleGenre'
+        Genre, blank=True, related_name="title", through="TitleGenre"
     )
     name = models.CharField(max_length=250)
     description = models.TextField(blank=True)
     year = models.IntegerField(db_index=True)
 
     class Meta:
-        ordering = ('-year',)
+        ordering = ("-year",)
 
     def __str__(self):
         return self.name
 
 
 class Review(models.Model):
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
+    title = models.ForeignKey(Title, on_delete=models.CASCADE, related_name="reviews")
     text = models.TextField(max_length=1000)
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='reviews'
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
     score = models.IntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(10)]
     )
@@ -71,35 +56,28 @@ class Review(models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=['author', 'title'],
-                name='unique_author_title'
+                fields=["author", "title"], name="unique_author_title"
             )
         ]
-        ordering = ('-pub_date',)
+        ordering = ("-pub_date",)
 
     def __str__(self):
-        return f'{self.author} - {self.score}'
+        return f"{self.author} - {self.score}"
 
 
 class Comment(models.Model):
     review = models.ForeignKey(
-        Review,
-        on_delete=CASCADE,
-        related_name='comments'
+        Review, on_delete=models.CASCADE, related_name="comments"
     )
     text = models.TextField(max_length=200)
-    author = models.ForeignKey(
-        User,
-        on_delete=CASCADE,
-        related_name='comments'
-    )
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="comments")
     pub_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ('-pub_date',)
+        ordering = ("-pub_date",)
 
     def __str__(self):
-        return f'{self.author} - {self.text}'
+        return f"{self.author} - {self.text}"
 
 
 class TitleGenre(models.Model):
@@ -107,4 +85,4 @@ class TitleGenre(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f'{self.title} {self.genre}'
+        return f"{self.title} {self.genre}"
